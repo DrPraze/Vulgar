@@ -187,13 +187,6 @@ class Main:
         useless, color = askcolor(title = "choose your cursor's color")
         self.textArea.config(insertbackground = color)
         self.update_line_nums()
-
-#=================this doesn't work yet============================
-    def colorise(self):
-        code = self.textArea.get(0.0, END)
-        bfchars = ['<', '>', '+', '-', '[', ']', ',', '.']
-        
-    #=========================END OF REGION=====================================
                 
     def Run(self):
         code = self.textArea.get(0.0, END)
@@ -212,22 +205,16 @@ class Main:
                 self.textArea.tag_config('found', background = 'red')
                 showerror("Error", "invalid syntax")
                 self.textArea.tag_config('found', background = None)
-            #::::::::::::::::::::::still needs a slight touch::::::::::::::::::::::::::::::::::
-            #exec(pyshell.main())
-            self.tabControl.select(self.tab2)
-            try:
-                output = brainfuck.evaluate(code)
-                print(output)
-                self.View.config(state = NORMAL)
-                self.Veiw.delete(0.0, END)
-                self.View.insert(0.0, self.text)
-                self.View.insert(END, output)
-                self.View.config(state = DISABLED)
-            except Exception as e:
-                self.View.config(state = NORMAL)
-                self.View.config(foreground = "red")
-                self.View.insert(END, e)
-                self.View.config(state = DISABLED)
-            #::::::::::::::::::::::::::::::END OF REGION::::::::::::::::::::::::::::::::::::::::::
+
+        self.tabControl.select(self.tab2)
+        output = brainfuck.evaluate(code)
+        self.View.config(state = NORMAL)
+        self.View.insert(END, str(output))#don't know why but it prints the output to your python shell instead 
+        self.View.delete(0.0, END)
+        self.View.insert(0.0, self.text)
+        
+        self.View.config(state = DISABLED)
+
 if __name__=='__main__':
     Main()
+
