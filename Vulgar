@@ -1,0 +1,233 @@
+import os
+from tkinter import *
+from tkinter import ttk
+from tkinter.filedialog import *
+from tkinter.messagebox import *
+import brainfuck
+from tkinter.colorchooser import *
+from tkinter.scrolledtext import ScrolledText
+
+class Main:
+    root = Tk()
+    root.title("Untitled - Vulgar")
+    root.geometry('800x600')
+    menuBar = Menu(root)
+    FileMenu = Menu(menuBar, tearoff = 0)
+    EditMenu = Menu(menuBar, tearoff = 0)
+    RunMenu = Menu(menuBar, tearoff = 0)
+    HelpMenu = Menu(menuBar, tearoff = 0)
+    ConfigMenu = Menu(menuBar, tearoff = 0)
+    title = "Code "
+    tabControl = ttk.Notebook(root)
+    tab1 = Frame(tabControl)
+    tab2 = Frame(tabControl)
+    tabControl.add(tab1, text = title)
+    tabControl.add(tab2, text = "Console")
+    tabControl.pack(expand = 1, fill = BOTH)
+    line_num = Canvas(tab1, width = 50, bg = "black")
+    textArea = ScrolledText(tab1,background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
+    View = ScrolledText(tab2, background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
+    scroll = Scrollbar(textArea)
+    file = None
+    def __init__(self):
+        self.root.grid_rowconfigure(0, weight = 1)
+        self.root.grid_columnconfigure(0, weight = 1)
+        self.FileMenu.add_command(label = "New File         Ctrl+N", command = self.newFile)
+        self.FileMenu.add_command(label = "Open...            Ctrl+O", command = self.openFile)
+        self.FileMenu.add_command(label = "Save              Ctrl+S", command = self.saveFile)
+        self.FileMenu.add_command(label = "Save As...        Ctrl+Shift+S", command = self.SaveAs)
+        self.FileMenu.add_command(label = "Exit              Ctrl+Q", command = self._quit_)
+        
+        self.HelpMenu.add_command(label = "About ", command = self.ShowAbout)
+        self.HelpMenu.add_command(label = "How to use", command = None)
+        
+        self.EditMenu.add_command(label = "undo      Ctrl+Z", command = self.undo)
+        self.EditMenu.add_command(label = "redo      Ctrl+Y", command = self.redo)
+        self.EditMenu.add_command(label = "Copy      Ctrl+C", command = self.copy)
+        self.EditMenu.add_command(label = "Cut         Ctrl+X", command = self.cut)
+        self.EditMenu.add_command(label = "Paste      Ctrl+V", command = self.paste)
+        self.EditMenu.add_command(label = "Select All  Ctrl+A", command = None)
+
+        self.ConfigMenu.add_command(label = "Set background color", command = self.Setbg)
+        self.ConfigMenu.add_command(label = "Set text color", command = self.Setfg)
+        self.ConfigMenu.add_command(label = "Set cursor color", command = self.SetCurs)
+        self.RunMenu.add_command(label = "Run code       F5", command = self.Run)
+
+        self.menuBar.add_cascade(label = "File", menu = self.FileMenu)
+        self.menuBar.add_cascade(label = "Edit", menu = self.EditMenu)
+        self.menuBar.add_cascade(label = "Run", menu = self.RunMenu)
+        self.menuBar.add_cascade(label = "Configure IDE", menu = self.ConfigMenu)
+        self.menuBar.add_cascade(label = "Help", menu = self.HelpMenu)
+        self.root.config(menu = self.menuBar)
+        self.line_num.pack(side=LEFT, fill = Y)
+        #self.textArea.pack(side = RIGHT, fill = "both")
+        self.textArea.place(x = 35)
+        self.root.bind("<F5>", lambda x:self.Run())
+
+        self.textArea.bind('<KeyPress>', lambda x:self.update_line_nums())
+        #bind update_line_nums to textArea here
+        self.View.pack()
+        self.text = "Vulgar - console >>>"
+        self.View.insert(0.0, self.text)
+        self.View.config(state = DISABLED)
+        self.update_line_nums()
+
+    def _quit_(self):
+        if askokcancel("Exit", "Are you sure you want to quit?"):
+            self.root.destroy()
+
+    def update_line_nums(self):
+        self.line_num.delete("all")
+        i = self.textArea.index("@0,0")
+        self.textArea.update()
+        while True:
+            dline = self.textArea.dlineinfo(i)
+            if dline:
+                y = dline[1]
+                linenum= i[0]
+                self.line_num.create_text(1, y, anchor = "nw", text = linenum, fill = "#fff", font = ('Helvetica', 16))
+                i = self.textArea.index('{0}+1line'.format(i))
+            else:
+                break
+            
+    def get_end_linenumber(text):
+        """Utility to get the last line's number in a Tk text widget."""
+        return int(float(text.index('end-1c')))
+
+    def ShowAbout(self):showinfo ("Vulgar", "made for sake of coding practice")
+
+    def openFile(self):
+        self.file = askopenfilename(defaultextension = " .txt", filetypes = [("All Files", "*.*"), ("Text Documents" , "*.txt"), ("Brainfuck files", "*.bf")])
+        if self.file == " ":
+            self.file = None
+        else:
+            self.root.title (os.path.basename(self.file) + " - Vulgar")
+            self.textArea.delete(1.0, END)
+            try:
+                file = open(self.file, "r")
+                self.textArea.insert(1.0, file.read())
+                file.close()
+            except Exception as e:
+                showerror("An Error Occured", e)
+        self.update_line_nums()
+ 
+    def newFile(self):
+        self.root.title("Untitled - Vulgar")
+        self.file = None
+        self.textArea.delete(1.0, END)
+
+    def saveFile(self):
+        if self.file == None:
+            self.file = asksaveasfilename (initialfile = 'Untitled.bf', defaultextension = " .bf", filetypes = [("All Files", "*.*"), ("Text Documents", "* .txt"), ("Brainfuck files", "*.bf")])
+            if self.file == " ":
+                self.file == None
+            else:
+                file = open(self.file, "w+")
+                file.write(self.textArea.get(1.0, END))
+                file.close()
+                self.root.title(os.path.basename(self.file) + " - Vulgar")
+        else:
+            file = open(self.file, "w+")
+            file.write(self.textArea.get(1.0, END))
+            file.close()
+        self.update_line_nums()
+
+    def SaveAs(self):
+        self.file = asksaveasfilename (initialfile = 'Untitled.bf', defaultextension = " .bf", filetypes = [("All Files", "*.*"), ("Text Documents", "* .txt"), ("Brainfuck files", "*.bf", "*.b")])
+        if self.file == " ":
+            pass
+        else:
+            file = open(self.file, "w+")
+            file.write(self.textArea.get(1.0, END))
+            file.close()
+            self.root.title(os.path.basename(self.file) + " - Vulgar")
+
+    def undo(self):
+        try:
+            self.textArea.event_generate("<<Undo>>")
+            self.update_line_nums()
+            return "break"
+        except Exception as e: showinfo("An Error Occured",e)
+
+    def redo(self, event=None):
+        try:
+            self.textArea.event_generate("<<Redo>>")
+            self.update_line_nums()
+            return "break"
+        except Exception as e: showinfo("An Error Occured", e)
+    
+    def cut(self):
+        try:
+            self.textArea.event.generate("<<Cut>>")
+        except Exception as e:
+            showerror("An Error Occured", e)
+        self.update_line_nums()
+    def copy(self):
+        try:
+            self.textArea.event.generate("<<Copy>>")
+        except Exception as e:showerror("An Error Occured", e)
+
+    def paste(self):
+        try:
+            self.textArea.event.generate("<<Paste>>")
+        except Exception as e:showerror("An Error Occured", e)
+        self.update_line_nums()
+
+    def Setbg(self):
+        useless, color = askcolor(title = "choose a background color")
+        self.textArea.config(background = color)
+        self.update_line_nums()
+    
+    def Setfg(self):
+        useless, color = askcolor(title= "choose your text color")
+        self.textArea.config(foreground = color)
+        self.update_line_nums()
+
+    def SetCurs(self):
+        useless, color = askcolor(title = "choose your cursor's color")
+        self.textArea.config(insertbackground = color)
+        self.update_line_nums()
+
+#=================this doesn't work yet============================
+    def colorise(self):
+        code = self.textArea.get(0.0, END)
+        bfchars = ['<', '>', '+', '-', '[', ']', ',', '.']
+        
+    #=========================END OF REGION=====================================
+                
+    def Run(self):
+        code = self.textArea.get(0.0, END)
+        symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '"', "'", '{', "}", '|', "/", "\ "]
+        for i in code:
+            if i.isdigit() or i.isalpha() is True or i in symbols:
+                self.s = i 
+                if self.s:
+                    self.idx = '1.0'
+                while 1:
+                    self.idx = self.textArea.search(self.s, self.idx, nocase = 1, stopindex = END)
+                    if not self.idx:break
+                    self.lastidx = '%s+%dc' % (self.idx, len(self.s))
+                    self.textArea.tag_add('found', self.idx, self.lastidx)
+                    self.idx = self.lastidx
+                self.textArea.tag_config('found', background = 'red')
+                showerror("Error", "invalid syntax")
+                self.textArea.tag_config('found', background = None)
+            #::::::::::::::::::::::still needs a slight touch::::::::::::::::::::::::::::::::::
+            #exec(pyshell.main())
+            self.tabControl.select(self.tab2)
+            try:
+                output = brainfuck.evaluate(code)
+                print(output)
+                self.View.config(state = NORMAL)
+                self.Veiw.delete(0.0, END)
+                self.View.insert(0.0, self.text)
+                self.View.insert(END, output)
+                self.View.config(state = DISABLED)
+            except Exception as e:
+                self.View.config(state = NORMAL)
+                self.View.config(foreground = "red")
+                self.View.insert(END, e)
+                self.View.config(state = DISABLED)
+            #::::::::::::::::::::::::::::::END OF REGION::::::::::::::::::::::::::::::::::::::::::
+if __name__=='__main__':
+    Main()
