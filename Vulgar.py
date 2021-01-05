@@ -7,31 +7,32 @@ import brainfuck
 from tkinter.colorchooser import *
 from tkinter.scrolledtext import ScrolledText
 
-class Main:
-    root = Tk()
-    root.title("Untitled - Vulgar")
-    root.geometry('800x600')
-    menuBar = Menu(root)
-    FileMenu = Menu(menuBar, tearoff = 0)
-    EditMenu = Menu(menuBar, tearoff = 0)
-    RunMenu = Menu(menuBar, tearoff = 0)
-    HelpMenu = Menu(menuBar, tearoff = 0)
-    ConfigMenu = Menu(menuBar, tearoff = 0)
-    title = "Code "
-    tabControl = ttk.Notebook(root)
-    tab1 = Frame(tabControl)
-    tab2 = Frame(tabControl)
-    tabControl.add(tab1, text = title)
-    tabControl.add(tab2, text = "Console")
-    tabControl.pack(expand = 1, fill = BOTH)
-    line_num = Canvas(tab1, width = 50, bg = "black")
-    textArea = ScrolledText(tab1,background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
-    View = ScrolledText(tab2, background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
-    scroll = Scrollbar(textArea)
-    file = None
+class Main(Tk):
+    
     def __init__(self):
-        self.root.grid_rowconfigure(0, weight = 1)
-        self.root.grid_columnconfigure(0, weight = 1)
+        super().__init__()
+        self.title("Untitled - Vulgar")
+        self.geometry('800x600')
+        self.menuBar = Menu(self)
+        self.FileMenu = Menu(self.menuBar, tearoff = 0)
+        self.EditMenu = Menu(self.menuBar, tearoff = 0)
+        self.RunMenu = Menu(self.menuBar, tearoff = 0)
+        self.HelpMenu = Menu(self.menuBar, tearoff = 0)
+        self.ConfigMenu = Menu(self.menuBar, tearoff = 0)
+        self.window_title = "Code "
+        self.tabControl = ttk.Notebook(self)
+        self.tab1 = Frame(self.tabControl)
+        self.tab2 = Frame(self.tabControl)
+        self.tabControl.add(self.tab1, text = self.window_title)
+        self.tabControl.add(self.tab2, text = "Console")
+        self.tabControl.pack(expand = 1, fill = BOTH)
+        self.line_num = Canvas(self.tab1, width = 50, bg = "black")
+        self.textArea = ScrolledText(self.tab1,background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
+        self.View = ScrolledText(self.tab2, background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
+        self.scroll = Scrollbar(self.textArea)
+        self.file = None
+        self.grid_rowconfigure(0, weight = 1)
+        self.grid_columnconfigure(0, weight = 1)
         self.FileMenu.add_command(label = "New File         Ctrl+N", command = self.newFile)
         self.FileMenu.add_command(label = "Open...            Ctrl+O", command = self.openFile)
         self.FileMenu.add_command(label = "Save              Ctrl+S", command = self.saveFile)
@@ -58,13 +59,13 @@ class Main:
         self.menuBar.add_cascade(label = "Run", menu = self.RunMenu)
         self.menuBar.add_cascade(label = "Configure IDE", menu = self.ConfigMenu)
         self.menuBar.add_cascade(label = "Help", menu = self.HelpMenu)
-        self.root.config(menu = self.menuBar)
+        self.config(menu = self.menuBar)
         self.line_num.pack(side=LEFT, fill = Y)
         #self.textArea.pack(side = RIGHT, fill = "both")
         self.textArea.place(x = 35)
-        self.root.bind("<F5>", lambda x:self.Run())
+        self.bind("<F5>", lambda x:self.Run())
 
-        self.textArea.bind('<KeyPress>', lambda x:self.update_line_nums())
+        self.textArea.bind('<Return>', lambda x:self.update_line_nums(x))
         #bind update_line_nums to textArea here
         self.View.pack()
         self.text = "Vulgar - console >>>"
@@ -74,21 +75,21 @@ class Main:
 
     def _quit_(self):
         if askokcancel("Exit", "Are you sure you want to quit?"):
-            self.root.destroy()
+            self.self.destroy()
 
-    def update_line_nums(self):
-        self.line_num.delete("all")
-        i = self.textArea.index("@0,0")
-        self.textArea.update()
-        while True:
-            dline = self.textArea.dlineinfo(i)
-            if dline:
-                y = dline[1]
-                linenum= i[0]
-                self.line_num.create_text(1, y, anchor = "nw", text = linenum, fill = "#fff", font = ('Helvetica', 16))
-                i = self.textArea.index('{0}+1line'.format(i))
-            else:
-                break
+    def update_line_nums(self, *args):
+        i = str(float(self.textArea.index('end'))-1)
+        dline = self.textArea.dlineinfo(i)
+        y = dline[1]
+        linenum= int(i.split('.')[0])
+        text = self.line_num.create_text(25, y+18 if args else y, anchor = "nw", text = linenum+1 if args else linenum, fill = "#fff", font = ('Helvetica', 12))
+        bbox = self.line_num.bbox(text)
+        coord = self.line_num.coords(text)
+        self.line_num.coords(text, 35-(bbox[2]-bbox[0]), coord[1])
+        i = self.textArea.index('{0}+1line'.format(i))
+
+    def delete_line_nums(self, *args):
+        ...
             
     def get_end_linenumber(text):
         """Utility to get the last line's number in a Tk text widget."""
@@ -101,7 +102,7 @@ class Main:
         if self.file == " ":
             self.file = None
         else:
-            self.root.title (os.path.basename(self.file) + " - Vulgar")
+            self.self.title (os.path.basename(self.file) + " - Vulgar")
             self.textArea.delete(1.0, END)
             try:
                 file = open(self.file, "r")
@@ -112,7 +113,7 @@ class Main:
         self.update_line_nums()
  
     def newFile(self):
-        self.root.title("Untitled - Vulgar")
+        self.self.title("Untitled - Vulgar")
         self.file = None
         self.textArea.delete(1.0, END)
 
@@ -125,7 +126,7 @@ class Main:
                 file = open(self.file, "w+")
                 file.write(self.textArea.get(1.0, END))
                 file.close()
-                self.root.title(os.path.basename(self.file) + " - Vulgar")
+                self.self.title(os.path.basename(self.file) + " - Vulgar")
         else:
             file = open(self.file, "w+")
             file.write(self.textArea.get(1.0, END))
@@ -140,7 +141,7 @@ class Main:
             file = open(self.file, "w+")
             file.write(self.textArea.get(1.0, END))
             file.close()
-            self.root.title(os.path.basename(self.file) + " - Vulgar")
+            self.self.title(os.path.basename(self.file) + " - Vulgar")
 
     def undo(self):
         try:
@@ -216,5 +217,5 @@ class Main:
         self.View.config(state = DISABLED)
 
 if __name__=='__main__':
-    Main()
+    Main().mainloop()
 
