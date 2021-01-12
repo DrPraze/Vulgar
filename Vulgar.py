@@ -13,19 +13,24 @@ class Main(Tk):
         super().__init__()
         self.title("Untitled - Vulgar")
         self.geometry('800x600')
+
         self.menuBar = Menu(self)
         self.FileMenu = Menu(self.menuBar, tearoff = 0)
         self.EditMenu = Menu(self.menuBar, tearoff = 0)
         self.RunMenu = Menu(self.menuBar, tearoff = 0)
         self.HelpMenu = Menu(self.menuBar, tearoff = 0)
         self.ConfigMenu = Menu(self.menuBar, tearoff = 0)
+        
         self.window_title = "Code "
         self.tabControl = ttk.Notebook(self)
         self.tab1 = Frame(self.tabControl)
         self.tab2 = Frame(self.tabControl)
+        self.tab3 = Frame(self.tabControl)
         self.tabControl.add(self.tab1, text = self.window_title)
         self.tabControl.add(self.tab2, text = "Console")
+        self.tabControl.add(self.tab3, text = "Build System")
         self.tabControl.pack(expand = 1, fill = BOTH)
+        
         self.line_num = Canvas(self.tab1, width = 50, bg = "black")
         self.textArea = ScrolledText(self.tab1,background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
         self.View = ScrolledText(self.tab2, background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
@@ -33,6 +38,7 @@ class Main(Tk):
         self.file = None
         self.grid_rowconfigure(0, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
+        
         self.FileMenu.add_command(label = "New File         Ctrl+N", command = self.newFile)
         self.FileMenu.add_command(label = "Open...            Ctrl+O", command = self.openFile)
         self.FileMenu.add_command(label = "Save              Ctrl+S", command = self.saveFile)
@@ -66,7 +72,8 @@ class Main(Tk):
         self.bind("<F5>", lambda x:self.Run())
 
         self.textArea.bind('<Return>', lambda x:self.update_line_nums(x))
-        #bind update_line_nums to textArea here
+        self.textArea.bind('<BackSpace>', lambda x:self.delete_line_nums(x))
+
         self.View.pack()
         self.text = "Vulgar - console >>>"
         self.View.insert(0.0, self.text)
@@ -89,7 +96,18 @@ class Main(Tk):
         i = self.textArea.index('{0}+1line'.format(i))
 
     def delete_line_nums(self, *args):
-        ...
+        #... 
+        self.line_num.delete('all')
+        i = str(float(self.textArea.index('end'))-1)
+        dline = self.textArea.dlineinfo(i)
+        y = dline[1]
+        linenum= int(i.split('.')[0])
+        text = self.line_num.create_text(25, y+18 if args else y, anchor = "nw", text = linenum-1 if args else linenum, fill = "#fff", font = ('Helvetica', 12))
+        bbox = self.line_num.bbox(text)
+        coord = self.line_num.coords(text)
+        self.line_num.coords(text, 35-(bbox[2]-bbox[0]), coord[1])
+        i = self.textArea.index('{0}+1line'.format(i))       
+
             
     def get_end_linenumber(text):
         """Utility to get the last line's number in a Tk text widget."""
@@ -124,7 +142,7 @@ class Main(Tk):
                 self.file == None
             else:
                 file = open(self.file, "w+")
-                file.write(self.textArea.get(1.0, END))
+                file.write(self.textAsrea.get(1.0, END))
                 file.close()
                 self.self.title(os.path.basename(self.file) + " - Vulgar")
         else:
@@ -218,4 +236,3 @@ class Main(Tk):
 
 if __name__=='__main__':
     Main().mainloop()
-
