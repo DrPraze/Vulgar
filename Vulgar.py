@@ -21,12 +21,11 @@ class Main(Tk):
         self.HelpMenu = Menu(self.menuBar, tearoff = 0)
         self.ConfigMenu = Menu(self.menuBar, tearoff = 0)
         
-        self.window_title = "Code "
         self.tabControl = ttk.Notebook(self)
         self.tab1 = Frame(self.tabControl)
         self.tab2 = Frame(self.tabControl)
         self.tab3 = Frame(self.tabControl)
-        self.tabControl.add(self.tab1, text = self.window_title)
+        self.tabControl.add(self.tab1, text = "Code")
         self.tabControl.add(self.tab2, text = "Console")
         self.tabControl.add(self.tab3, text = "Build System")
         self.tabControl.pack(expand = 1, fill = BOTH)
@@ -34,8 +33,17 @@ class Main(Tk):
         self.line_num = Canvas(self.tab1, width = 50, bg = "black")
         self.textArea = ScrolledText(self.tab1,background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
         self.View = ScrolledText(self.tab2, background = "black", foreground = "white", insertbackground = "white", wrap = WORD, width = 93, height = 90)
-        self.scroll = Scrollbar(self.textArea)
+        # self.scroll = Scrollbar(self.textArea)
         self.file = None
+        self.label = ttk.LabelFrame(self.tab3, text = "Select the build System")
+        self.label.pack()
+
+        self.BuildVar = IntVar()
+        self.rad1 = Radiobutton(self.label, text = "Brainfuck", variable = self.BuildVar, value = 1).pack()
+        self.rad2 = Radiobutton(self.label, text = "Batch", variable = self.BuildVar, value = 2).pack()
+        self.rad3 = Radiobutton(self.label, text = "Python", variable = self.BuildVar, value = 3).pack()
+        self.rad4 = Radiobutton(self.label, text = "CSharp", variable = self.BuildVar, value = 4).pack()
+        self.BuildVar.set(1)
         self.grid_rowconfigure(0, weight = 1)
         self.grid_columnconfigure(0, weight = 1)
         
@@ -67,12 +75,11 @@ class Main(Tk):
         self.menuBar.add_cascade(label = "Help", menu = self.HelpMenu)
         self.config(menu = self.menuBar)
         self.line_num.pack(side=LEFT, fill = Y)
-        #self.textArea.pack(side = RIGHT, fill = "both")
         self.textArea.place(x = 35)
         self.bind("<F5>", lambda x:self.Run())
 
         self.textArea.bind('<Return>', lambda x:self.update_line_nums(x))
-        self.textArea.bind('<BackSpace>', lambda x:self.delete_line_nums(x))
+        self.textArea.bind('<BackSpace>', lambda x:self.update_line_nums(x))
 
         self.View.pack()
         self.text = "Vulgar - console >>>"
@@ -108,11 +115,6 @@ class Main(Tk):
         self.line_num.coords(text, 35-(bbox[2]-bbox[0]), coord[1])
         i = self.textArea.index('{0}+1line'.format(i))       
 
-            
-    def get_end_linenumber(text):
-        """Utility to get the last line's number in a Tk text widget."""
-        return int(float(text.index('end-1c')))
-
     def ShowAbout(self):showinfo ("Vulgar", "made for sake of coding practice")
 
     def openFile(self):
@@ -120,7 +122,7 @@ class Main(Tk):
         if self.file == " ":
             self.file = None
         else:
-            self.self.title (os.path.basename(self.file) + " - Vulgar")
+            self.title(os.path.basename(self.file) + " - Vulgar")
             self.textArea.delete(1.0, END)
             try:
                 file = open(self.file, "r")
@@ -131,7 +133,7 @@ class Main(Tk):
         self.update_line_nums()
  
     def newFile(self):
-        self.self.title("Untitled - Vulgar")
+        self.title("Untitled - Vulgar")
         self.file = None
         self.textArea.delete(1.0, END)
 
@@ -206,8 +208,8 @@ class Main(Tk):
         useless, color = askcolor(title = "choose your cursor's color")
         self.textArea.config(insertbackground = color)
         self.update_line_nums()
-                
-    def Run(self):
+    
+    def RunBrainFuck(self):
         code = self.textArea.get(0.0, END)
         symbols = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '"', "'", '{', "}", '|', "/", "\ "]
         for i in code:
@@ -233,6 +235,20 @@ class Main(Tk):
         self.View.insert(0.0, self.text)
         
         self.View.config(state = DISABLED)
+
+    def RunOther(self):
+        from subprocess import Popen as P
+        P("CMD /K "+self.file)
+
+    def Run(self):
+        selected = self.BuildVar.get()
+        if selected == 1:
+            self.RunBrainFuck()
+        else:
+            try:
+                self.RunOther()
+            except Exception as e:
+                showerror("An Error has occured", e)
 
 if __name__=='__main__':
     Main().mainloop()
