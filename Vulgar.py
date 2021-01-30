@@ -80,7 +80,11 @@ class Main(Tk):
 
         self.textArea.bind('<Return>', lambda x:self.update_line_nums(x))
         self.textArea.bind('<BackSpace>', lambda x:self.update_line_nums(x))
-
+        self.textArea.bind('<Control-z>', lambda x:[self.undo()])
+        self.textArea.bind('<Control-y>', lambda x:[self.redo()])
+        self.textArea.bind('<Control-x>', lambda x:[self.cut()])
+        self.textArea.bind('<Control-c>', lambda x:[self.copy()])
+        self.textArea.bind('<Control-v>', lambda x:[self.paste()])
         self.View.pack()
         self.text = "Vulgar - console >>>"
         self.View.insert(0.0, self.text)
@@ -115,7 +119,7 @@ class Main(Tk):
         self.line_num.coords(text, 35-(bbox[2]-bbox[0]), coord[1])
         i = self.textArea.index('{0}+1line'.format(i))       
 
-    def ShowAbout(self):showinfo ("Vulgar", "made for sake of coding practice")
+    def ShowAbout(self):showinfo("Vulgar", "IDE, made for sake of coding practice")
 
     def openFile(self):
         self.file = askopenfilename(defaultextension = " .txt", filetypes = [("All Files", "*.*"), ("Text Documents" , "*.txt"), ("Brainfuck files", "*.bf")])
